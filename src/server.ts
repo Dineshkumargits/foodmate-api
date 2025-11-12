@@ -111,6 +111,11 @@ app.get('/api/consumers', authMiddleware, roleCheck(['seller']), (req: Request &
   res.json(rows);
 });
 
+app.get('/api/entries', authMiddleware, roleCheck(['seller']), (req: Request & { user?: JwtPayload }, res: Response) => {
+  let rows = db.prepare('SELECT * FROM food_entries ORDER BY date DESC').all();
+  res.json(rows);
+});
+
 app.delete('/api/entries/:id', authMiddleware, roleCheck(['seller']), (req: Request & { user?: JwtPayload }, res: Response) => {
   const id = req.params.id;
   const stmt = db.prepare('DELETE FROM food_entries WHERE id=? AND seller_id=?');
@@ -179,9 +184,12 @@ app.get('/api/reports/consumer/:id', authMiddleware, roleCheck(['seller']), (req
 });
 
 app.get('/api/dashboard', authMiddleware, roleCheck(['seller']), (req: Request & { user?: JwtPayload }, res: Response) => {
-  const totalDue = db.prepare('SELECT IFNULL(SUM(amount),0) as s FROM food_entries').get().s as number;
-  const totalPaid = db.prepare('SELECT IFNULL(SUM(amount),0) as s FROM payments').get().s as number;
-  res.json({ totalDue, totalPaid, balance: totalDue - totalPaid });
+  const totalRevenue = db.prepare('SELECT IFNULL(SUM(amount),0) as s FROM food_entries').get().s as number;
+  const amountPaid = db.prepare('SELECT IFNULL(SUM(amount),0) as s FROM payments').get().s as number;
+  const todayFoodItems = db.prepare(
+  "SELECT food_name FROM food_entries WHERE DATE(created_at) = DATE('now', 'localtime')"
+).all();
+  res.json({  totalRevenue, amountPaid, pendingBalance: totalRevenue - amountPaid, todayFoodItems: todayFoodItems?.map((s) => s.food_name)?.join(', ') });
 });
 
 const PORT = process.env.PORT || 4000;
