@@ -1,0 +1,70 @@
+import { DataTypes, Model, Optional } from "sequelize";
+import { compareSync } from "../util/encrypt";
+import sequelizeConnection from "../db/connection";
+
+interface UserAttributes {
+  id: number;
+  name: string;
+  email: string;
+  password_hash: string;
+  role: "seller" | "consumer";
+  created_at?: Date;
+}
+
+type UserCreationAttributes = Optional<UserAttributes, "id" | "created_at">;
+
+class User
+  extends Model<UserAttributes, UserCreationAttributes>
+  implements UserAttributes
+{
+  public id!: number;
+  public name!: string;
+  public email!: string;
+  public password_hash!: string;
+  public role!: "seller" | "consumer";
+  public created_at!: Date;
+
+  static validPassword(password: string, hash: string): boolean {
+    return compareSync(password, hash);
+  }
+}
+
+User.init(
+  {
+    id: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    name: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      unique: true,
+      validate: { isEmail: true },
+    },
+    password_hash: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    role: {
+      type: DataTypes.ENUM("seller", "consumer"),
+      allowNull: false,
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    sequelize: sequelizeConnection,
+    tableName: "users",
+    timestamps: false,
+    underscored: true,
+  }
+);
+
+export default User;
