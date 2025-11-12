@@ -106,6 +106,11 @@ app.put('/api/entries/:id', authMiddleware, roleCheck(['seller']), (req: Request
   res.json({ success: true });
 });
 
+app.get('/api/consumers', authMiddleware, roleCheck(['seller']), (req: Request & { user?: JwtPayload }, res: Response) => {
+  let rows = db.prepare('SELECT * FROM users WHERE role=? ORDER BY id').all('consumer');
+  res.json(rows);
+});
+
 app.delete('/api/entries/:id', authMiddleware, roleCheck(['seller']), (req: Request & { user?: JwtPayload }, res: Response) => {
   const id = req.params.id;
   const stmt = db.prepare('DELETE FROM food_entries WHERE id=? AND seller_id=?');
