@@ -1,4 +1,5 @@
 import {
+  getAllPaymentsService,
   getMyPaymentsService,
   recordPaymentService,
 } from "../services/paymentService";
@@ -26,6 +27,19 @@ export const getMyPayments = async (
   try {
     const consumerId = req.user.id;
     const response = await getMyPaymentsService(consumerId);
+    res.json(response);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getAllPayments = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const response = await getAllPaymentsService();
     res.json(response);
   } catch (err) {
     next(err);

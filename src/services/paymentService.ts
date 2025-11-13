@@ -1,6 +1,7 @@
-import Payment from "../models/Payment";
+import { Payment } from "../models";
 import { AuthRequest } from "../middleware/auth";
 import { Response } from "express";
+import User from "../models/User";
 
 export const recordPaymentService = async ({
   req,
@@ -9,10 +10,9 @@ export const recordPaymentService = async ({
   req: AuthRequest;
   res: Response;
 }) => {
-  const { consumer_id, seller_id, date, amount, note, upi_reference } =
-    req.body;
+  const { consumer_id, date, amount, note, upi_reference } = req.body;
   const consumerIdNum = Number(consumer_id);
-  const sellerIdNum = Number(seller_id);
+  const sellerIdNum = Number(req.user!.id);
   const amt = Number(amount);
   if (!consumerIdNum || !sellerIdNum || !date || isNaN(amt))
     return res.status(400).json({ error: "invalid input" });
@@ -46,5 +46,18 @@ export const getMyPaymentsService = async (consumer_id: number) => {
       consumer_id,
     },
     order: [["date", "DESC"]],
+  });
+};
+
+export const getAllPaymentsService = async () => {
+  return Payment.findAll({
+    order: [["date", "DESC"]],
+    include: [
+      {
+        model: User,
+        as: "Consumer",
+        attributes: { exclude: ["password_hash"] },
+      },
+    ],
   });
 };
