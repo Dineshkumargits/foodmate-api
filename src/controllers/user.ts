@@ -53,8 +53,12 @@ export const getConsumers = async (
   res: Response,
   next: NextFunction
 ) => {
+  const users = await getUsers({ where: { role: "consumer" } });
   try {
-    return getUsers({ where: { role: "consumer" } });
+    res.status(200).json({
+      data: users,
+      error: false,
+    });
   } catch (err) {
     next(err);
   }

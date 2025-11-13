@@ -12,7 +12,7 @@ const foodEntryRouter = Router();
 
 foodEntryRouter.post("/", authMiddleware, roleCheck(["seller"]), addFoodEntry);
 foodEntryRouter.get(
-  "/:id",
+  "/:id?",
   authMiddleware,
   roleCheck(["seller"]),
   getFoodEntries

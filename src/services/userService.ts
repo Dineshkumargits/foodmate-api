@@ -10,7 +10,7 @@ export const createUser = async (payload: any) => {
 
 export const getUserById = async (id: number) => {
   const user = await User.findByPk(id, {
-    attributes: { exclude: ["password"] },
+    attributes: { exclude: ["password_hash"] },
   });
   if (!user) {
     throw new Error("User not found");
@@ -75,7 +75,7 @@ export const findOneUser = async (options: any) => {
 
   const user = await User.findOne({
     where,
-    attributes: { exclude: ["password"] },
+    attributes: { exclude: ["password_hash"] },
   });
   return user;
 };
@@ -116,6 +116,8 @@ export const deleteUserById = (userId: number) => {
 export const getUsers = async ({ where }: { where: WhereOptions<any> }) => {
   const users = await User.findAll({
     where: { ...where },
+    attributes: { exclude: ["password_hash"] },
+    raw: true
   });
   return users;
 };

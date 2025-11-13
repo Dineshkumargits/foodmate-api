@@ -1,8 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../util/token";
+import { verify } from "../util/jwt";
+import { get } from "lodash";
+import User from "../models/User";
 
 export interface AuthRequest extends Request {
-  user?: { id: number; role: "seller" | "consumer" };
+  user?: Partial<User>
   file?: any;
 }
 
@@ -11,13 +14,25 @@ export function authMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  const auth = req.headers.authorization;
-  if (!auth) return res.status(401).json({ error: "missing token" });
-
-  const token = auth.split(" ")[1];
   try {
-    req.user = verifyToken(token);
-    next();
+    const bearerToken = get(req, "headers.authorization");
+    let token = bearerToken;
+    if (bearerToken && bearerToken.startsWith("Bearer ")) {
+      token = bearerToken.substring(7);
+    }
+    if (!token) return res.status(401).json({ error: "missing token" });
+
+    const { decoded, expired, valid, msg: errorMsg } = verify(token);
+
+    if (valid && !expired) {
+      req.user = decoded as Partial<User>;
+      return next();
+    } else {
+      return res.status(403).json({
+        error: true,
+        errorMsg: errorMsg,
+      });
+    }
   } catch {
     return res.status(401).json({ error: "invalid token" });
   }
