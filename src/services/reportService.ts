@@ -1,6 +1,7 @@
 import { col, fn, Op, Sequelize } from "sequelize";
 import FoodEntry from "../models/FoodEntry";
 import Payment from "../models/Payment";
+import { User } from "../models";
 
 export const getConsumerReportService = async (
   consumerId: number,
@@ -85,5 +86,124 @@ export const getDashboardDataService = async () => {
     amountPaid,
     pendingBalance: totalRevenue - amountPaid,
     todayFoodItems,
+  };
+};
+
+export const getMonthlySummaryService = async ({
+  consumerId,
+  monthNum,
+  monthName,
+}: {
+  consumerId: number;
+  monthNum: number;
+  monthName: string;
+}) => {
+  const year = new Date().getFullYear();
+  const consumerFilter = consumerId ? { consumerId } : {};
+
+  const foodStats = await FoodEntry.findOne({
+    where: {
+      ...consumerFilter,
+      [Op.and]: [
+        Sequelize.where(fn("MONTH", col("date")), monthNum),
+        Sequelize.where(fn("YEAR", col("date")), year),
+      ],
+    },
+    attributes: [
+      [fn("SUM", col("amount")), "totalRevenue"],
+      [fn("COUNT", col("id")), "totalItems"],
+    ],
+    raw: true,
+  });
+
+  const totalRevenue = Number((foodStats as any)?.totalRevenue || 0);
+  const totalItems = Number((foodStats as any)?.totalItems || 0);
+
+  const paymentStats = await Payment.findOne({
+    where: {
+      ...consumerFilter,
+      [Op.and]: [
+        Sequelize.where(fn("MONTH", col("date")), monthNum),
+        Sequelize.where(fn("YEAR", col("date")), year),
+      ],
+    },
+    attributes: [[fn("SUM", col("amount")), "totalPaid"]],
+    raw: true,
+  });
+
+  const totalPaid = Number((paymentStats as any)?.totalPaid || 0);
+
+  let breakdown: any[] = [];
+
+  if (!consumerId) {
+    breakdown = await FoodEntry.findAll({
+      where: {
+        [Op.and]: [
+          Sequelize.where(fn("MONTH", col("date")), monthNum),
+          Sequelize.where(fn("YEAR", col("date")), year),
+        ],
+      },
+      include: [{ model: User, as: "Consumer", attributes: ["id", "name"] }],
+      attributes: [
+        "Consumer.id" as "consumerId",
+        [fn("SUM", col("amount")), "totalRevenue"],
+      ],
+      group: ["Consumer.id" as "consumerId", "Consumer.id"],
+      raw: true,
+    });
+    breakdown = breakdown?.map(b => ({
+      ...b,
+      consumerId: b["Consumer.id"],
+      consumerName: b["Consumer.name"],
+    }));
+  }
+  const pendingAmount = totalRevenue - totalPaid;
+  const avgPerItem = totalItems > 0 ? totalRevenue / totalItems : 0;
+  const collectionRate =
+    totalRevenue > 0 ? (totalPaid / totalRevenue) * 100 : 0;
+
+  const displayMonth = `${monthName.charAt(0).toUpperCase()}${monthName
+    .slice(1)
+    .toLowerCase()} ${year}`;
+
+  return {
+    month: displayMonth,
+    consumerId,
+    totalRevenue,
+    totalPaid,
+    pendingAmount,
+    totalItems,
+    avgPerItem,
+    collectionRate,
+    breakdown: consumerId ? null : breakdown,
+    stats: [
+      {
+        label: "Total Revenue",
+        value: totalRevenue,
+        color: "#22c55e",
+        bg: "#dcfce7",
+        isAmount: true,
+      },
+      {
+        label: "Collected",
+        value: totalPaid,
+        color: "#3b82f6",
+        bg: "#dbeafe",
+        isAmount: true,
+      },
+      {
+        label: "Pending",
+        value: pendingAmount,
+        color: "#f97316",
+        bg: "#fed7aa",
+        isAmount: true,
+      },
+      {
+        label: "Total Items",
+        value: totalItems,
+        color: "#a855f7",
+        bg: "#f3e8ff",
+      },
+    ],
   };
 };

@@ -1,9 +1,11 @@
 import { Router } from "express";
-import { getMyEntries } from "../../controllers/foodEntry";
+import {
+  getConsumerReports,
+  getDashboardData,
+  getMonthlySummary,
+} from "../../controllers/report";
 import { authMiddleware } from "../../middleware/auth";
 import { roleCheck } from "../../middleware/roleCheck";
-import { getMyPayments } from "../../controllers/payment";
-import { getConsumerReports, getDashboardData } from "../../controllers/report";
 
 const reportRouter = Router();
 
@@ -19,6 +21,13 @@ reportRouter.get(
   authMiddleware,
   roleCheck(["seller"]),
   getDashboardData
+);
+
+reportRouter.get(
+  "/seller/monthly-stats",
+  authMiddleware,
+  roleCheck(["seller"]),
+  getMonthlySummary
 );
 
 export default reportRouter;
