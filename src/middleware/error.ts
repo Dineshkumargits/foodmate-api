@@ -1,4 +1,3 @@
-import { customError } from "customDefinition";
 import { NextFunction, Request, Response } from "express";
 import { ApiError } from "../util/ApiError";
 
@@ -10,7 +9,7 @@ import { ApiError } from "../util/ApiError";
  * @param next
  */
 export const errorHandler = (
-  error: customError,
+  error: any,
   req: Request,
   res: Response,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
