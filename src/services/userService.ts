@@ -3,7 +3,7 @@ import User from "../models/User";
 import { Op, WhereOptions } from "sequelize";
 
 export const createUser = async (payload: any) => {
-  payload.password = encryptSync(payload.password);
+  payload.password_hash = encryptSync(payload.password);
   const user = await User.create(payload);
   return user;
 };
@@ -19,13 +19,13 @@ export const getUserById = async (id: number) => {
 };
 
 export const userExists = async (
-  options: { email: string | null; mobile: string | null } = {
+  options: { email: string | null; phone: string | null } = {
     email: null,
-    mobile: null,
+    phone: null
   }
 ) => {
-  if (!options.email) {
-    throw new Error("Please provide either of these options: email");
+  if (!options.email || !options.phone) {
+    throw new Error("Email or Phone is missing");
   }
   const where: any = {
     [Op.or]: [],
@@ -33,8 +33,8 @@ export const userExists = async (
   if (options.email) {
     where[Op.or].push({ email: options.email });
   }
-  if (options.mobile) {
-    where[Op.or].push({ email: options.mobile });
+  if (options.phone) {
+    where[Op.or].push({ phone: options.phone });
   }
 
   const users = await User.findAll({ where: where });

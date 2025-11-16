@@ -1,14 +1,17 @@
 import { Router } from "express";
 import { requireUser, validateRequest } from "../../middleware";
-import { getConsumers, getUserData, updateUser } from "../../controllers/user";
-import { updateSchema } from "../../validation/user";
+import { addUser, changePassword, getConsumers, getUserData, updateConsumer, updateUser } from "../../controllers/user";
+import { addUserSchema, updateSchema } from "../../validation/user";
 import { roleCheck } from "../../middleware/roleCheck";
 
 const userRouter = Router();
 
 userRouter.patch("/", requireUser, validateRequest(updateSchema), updateUser);
 userRouter.get("/", requireUser, getUserData);
+userRouter.post("/change-password", requireUser, changePassword);
 userRouter.get("/consumers", roleCheck(["seller"]), getConsumers);
+userRouter.post("/add", validateRequest(addUserSchema), addUser);
+userRouter.patch("/updateConsumer/:id", validateRequest(addUserSchema), updateConsumer);
 
 export default userRouter;
 

@@ -39,6 +39,7 @@ export const getFoodEntryByConsumerId = (consumerId: number) => {
     where: {
       consumer_id: consumerId,
     },
+    raw: true,
     order: [["date", "DESC"]],
   });
 };

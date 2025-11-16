@@ -6,6 +6,7 @@ interface UserAttributes {
   id: number;
   name: string;
   email: string;
+  phone: string;
   password_hash: string;
   role: "seller" | "consumer";
   created_at?: Date;
@@ -20,6 +21,7 @@ class User
   public id!: number;
   public name!: string;
   public email!: string;
+  public phone!: string;
   public password_hash!: string;
   public role!: "seller" | "consumer";
   public created_at!: Date;
@@ -45,6 +47,11 @@ User.init(
       allowNull: false,
       unique: true,
       validate: { isEmail: true },
+    },
+    phone: {
+      type: DataTypes.STRING(15),
+      allowNull: false,
+      unique: true,
     },
     password_hash: {
       type: DataTypes.STRING(255),

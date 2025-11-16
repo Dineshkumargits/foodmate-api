@@ -22,10 +22,10 @@ export const registerUser = async (
     let user = req.body;
     const userExist = await userExists({
       email: user.email,
-      mobile: user.mobile,
+      phone: user.phone,
     });
     if (userExist) {
-      throw new ApiError(400, "Email or Mobile is alredy used");
+      throw new ApiError(400, "Email or Mobile is already used");
     }
     user = await createUser(user);
     const userData = omit(user?.toJSON(), omitData);

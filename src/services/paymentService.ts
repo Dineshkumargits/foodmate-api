@@ -2,6 +2,7 @@ import { Payment } from "../models";
 import { AuthRequest } from "../middleware/auth";
 import { Response } from "express";
 import User from "../models/User";
+import { getFoodEntryByConsumerId } from "./foodEntryService";
 
 export const recordPaymentService = async ({
   req,
@@ -60,4 +61,17 @@ export const getAllPaymentsService = async () => {
       },
     ],
   });
+};
+
+export const getMyExpensesService = async (consumerId: number) => {
+  // Fetch all food items for this consumer
+  const foodItems = await getFoodEntryByConsumerId(consumerId);
+
+  // Fetch all payments for this consumer
+  const payments = await getMyPaymentsService(consumerId);
+
+  return {
+    foodItems,
+    payments,
+  };
 };

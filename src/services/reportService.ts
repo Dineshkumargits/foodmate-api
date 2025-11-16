@@ -1,7 +1,7 @@
 import { col, fn, Op, Sequelize } from "sequelize";
 import FoodEntry from "../models/FoodEntry";
 import Payment from "../models/Payment";
-import { User } from "../models";
+import { sequelizeConnection, User } from "../models";
 
 export const getConsumerReportService = async (
   consumerId: number,
@@ -64,20 +64,14 @@ export const getDashboardDataService = async () => {
   const amountPaid = Number(amountPaidResult?.amountPaid ?? 0);
 
   // 3️⃣ Today's food items (created today, local time)
-  const today = new Date();
-  const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-  const endOfDay = new Date(today.setHours(23, 59, 59, 999));
-
   const todayEntries = await FoodEntry.findAll({
-    where: {
-      created_at: {
-        [Op.gte]: startOfDay,
-        [Op.lt]: endOfDay,
-      },
-    },
-    attributes: ["food_name"],
-    raw: true,
-  });
+  where: sequelizeConnection.where(
+    sequelizeConnection.fn("DATE", sequelizeConnection.col("date")),
+    sequelizeConnection.fn("CURDATE")
+  ),
+  attributes: ["food_name"],
+  raw: true,
+});
 
   const todayFoodItems = todayEntries.map(f => f.food_name).join(", ") || null;
 

@@ -1,8 +1,10 @@
-import { findOneUser, getUsers, updateUserById } from "../services/userService";
-import { NextFunction, Response } from "express";
+import { createUser, findOneUser, getUsers, updateUserById, userExists, validatePassword } from "../services/userService";
+import { NextFunction, Response, Request } from "express";
 import { omit } from "lodash";
 import { customRequest } from "../types/customDefinition";
 import { ApiError } from "../util/ApiError";
+import { encryptSync } from "../util/encrypt";
+import { User } from "../models";
 const omitData = ["password"];
 export const updateUser = async (
   req: customRequest,
@@ -57,6 +59,97 @@ export const getConsumers = async (
   try {
     res.status(200).json({
       data: users,
+      error: false,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const addUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    let user = req.body;
+    const userExist = await userExists({
+      email: user.email,
+      phone: user.phone,
+    });
+    if (userExist) {
+      throw new ApiError(400, "Email or Mobile is already used");
+    }
+    user = await createUser({...user, password: user.password || "changethispassword123", role: "consumer" });
+    const userData = omit(user?.toJSON(), omitData);
+
+    return res.status(200).json({
+      data: userData,
+      error: false,
+      msg: "User added successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateConsumer = async (
+  req: customRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+
+    let body = req.body;
+    body = omit(body, omitData);
+
+    const user = await findOneUser({ id: req.params.id });
+
+    if (!user) {
+      throw new ApiError(400, "User not found");
+    }
+
+
+    const updated = await updateUserById(body, parseInt(req.params.id, 10));
+
+    return res.status(200).json({
+      updated: updated[0],
+      msg: updated[0] ? "Data updated successfully" : "failed to update",
+      error: false,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const changePassword = async (
+  req: customRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id: userId } = req.user;
+    const { current_password, new_password } = req.body;
+
+    const user = await User.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new ApiError(400, "User not found");
+    }
+
+    const validPassword = User.validPassword(current_password, user.password_hash);
+    if (!validPassword) {
+      throw new ApiError(400, "Old password is incorrect");
+    }
+
+    const updated = await updateUserById(
+      { password_hash: encryptSync(new_password) },
+      parseInt(userId, 10)
+    );
+
+    return res.status(200).json({
+      updated: updated[0],
+      msg: updated[0] ? "Password changed successfully" : "failed to change password",
       error: false,
     });
   } catch (err) {

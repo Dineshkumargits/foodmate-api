@@ -10,6 +10,16 @@ export const registerSchema = Joi.object({
   country_code: Joi.string(),
 });
 
+export const addUserSchema = Joi.object({
+  name: Joi.string().min(3).max(30).required(),
+  username: Joi.string(),
+  email: Joi.string().email().required(),
+  phone: Joi.string(),
+  password: Joi.string(),
+  confirm_password: Joi.string(),
+  country_code: Joi.string(),
+});
+
 export const loginSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(8).required(),
