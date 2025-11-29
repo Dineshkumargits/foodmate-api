@@ -9,10 +9,14 @@ interface UserAttributes {
   phone: string;
   password_hash: string;
   role: "seller" | "consumer";
+  push_token?: string;
   created_at?: Date;
 }
 
-type UserCreationAttributes = Optional<UserAttributes, "id" | "created_at">;
+type UserCreationAttributes = Optional<
+  UserAttributes,
+  "id" | "created_at" | "push_token"
+>;
 
 class User
   extends Model<UserAttributes, UserCreationAttributes>
@@ -24,6 +28,7 @@ class User
   public phone!: string;
   public password_hash!: string;
   public role!: "seller" | "consumer";
+  public push_token?: string;
   public created_at!: Date;
 
   static validPassword(password: string, hash: string): boolean {
@@ -60,6 +65,10 @@ User.init(
     role: {
       type: DataTypes.ENUM("seller", "consumer"),
       allowNull: false,
+    },
+    push_token: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
     created_at: {
       type: DataTypes.DATE,

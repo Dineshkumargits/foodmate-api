@@ -1,6 +1,18 @@
+import {
+  getDevices,
+  removeDevice,
+  savePushToken,
+} from "./../../controllers/user";
 import { Router } from "express";
 import { requireUser, validateRequest } from "../../middleware";
-import { addUser, changePassword, getConsumers, getUserData, updateConsumer, updateUser } from "../../controllers/user";
+import {
+  addUser,
+  changePassword,
+  getConsumers,
+  getUserData,
+  updateConsumer,
+  updateUser,
+} from "../../controllers/user";
 import { addUserSchema, updateSchema } from "../../validation/user";
 import { roleCheck } from "../../middleware/roleCheck";
 
@@ -11,7 +23,15 @@ userRouter.get("/", requireUser, getUserData);
 userRouter.post("/change-password", requireUser, changePassword);
 userRouter.get("/consumers", roleCheck(["seller"]), getConsumers);
 userRouter.post("/add", validateRequest(addUserSchema), addUser);
-userRouter.patch("/updateConsumer/:id", validateRequest(addUserSchema), updateConsumer);
+userRouter.patch(
+  "/updateConsumer/:id",
+  validateRequest(addUserSchema),
+  updateConsumer
+);
+// Push notification routes
+userRouter.post("/push-token", requireUser, savePushToken);
+userRouter.get("/devices", requireUser, getDevices);
+userRouter.delete("/devices/:deviceId", requireUser, removeDevice);
 
 export default userRouter;
 

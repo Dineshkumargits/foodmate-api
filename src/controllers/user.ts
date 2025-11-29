@@ -1,10 +1,22 @@
-import { createUser, findOneUser, getUsers, updateUserById, userExists, validatePassword } from "../services/userService";
+import {
+  createUser,
+  findOneUser,
+  getUsers,
+  updateUserById,
+  userExists,
+  validatePassword,
+} from "../services/userService";
 import { NextFunction, Response, Request } from "express";
 import { omit } from "lodash";
 import { customRequest } from "../types/customDefinition";
 import { ApiError } from "../util/ApiError";
 import { encryptSync } from "../util/encrypt";
 import { User } from "../models";
+import {
+  deactivateDevice,
+  getUserDevices,
+  updatePushToken,
+} from "../services/deviceService";
 const omitData = ["password"];
 export const updateUser = async (
   req: customRequest,
@@ -80,7 +92,11 @@ export const addUser = async (
     if (userExist) {
       throw new ApiError(400, "Email or Mobile is already used");
     }
-    user = await createUser({...user, password: user.password || "changethispassword123", role: "consumer" });
+    user = await createUser({
+      ...user,
+      password: user.password || "changethispassword123",
+      role: "consumer",
+    });
     const userData = omit(user?.toJSON(), omitData);
 
     return res.status(200).json({
@@ -99,7 +115,6 @@ export const updateConsumer = async (
   next: NextFunction
 ) => {
   try {
-
     let body = req.body;
     body = omit(body, omitData);
 
@@ -108,7 +123,6 @@ export const updateConsumer = async (
     if (!user) {
       throw new ApiError(400, "User not found");
     }
-
 
     const updated = await updateUserById(body, parseInt(req.params.id, 10));
 
@@ -137,7 +151,10 @@ export const changePassword = async (
       throw new ApiError(400, "User not found");
     }
 
-    const validPassword = User.validPassword(current_password, user.password_hash);
+    const validPassword = User.validPassword(
+      current_password,
+      user.password_hash
+    );
     if (!validPassword) {
       throw new ApiError(400, "Old password is incorrect");
     }
@@ -149,7 +166,82 @@ export const changePassword = async (
 
     return res.status(200).json({
       updated: updated[0],
-      msg: updated[0] ? "Password changed successfully" : "failed to change password",
+      msg: updated[0]
+        ? "Password changed successfully"
+        : "failed to change password",
+      error: false,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const savePushToken = async (
+  req: customRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id: userId } = req.user;
+    const { pushToken, oldToken, deviceInfo } = req.body;
+
+    if (!pushToken) {
+      throw new ApiError(400, "Push token is required");
+    }
+
+    if (!deviceInfo || !deviceInfo.platform) {
+      throw new ApiError(400, "Device info with platform is required");
+    }
+
+    const result = await updatePushToken(userId, pushToken, oldToken, {
+      platform: deviceInfo.platform,
+      model: deviceInfo.model,
+      osVersion: deviceInfo.osVersion,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+      error: false,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getDevices = async (
+  req: customRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id: userId } = req.user;
+    const devices = await getUserDevices(userId);
+
+    return res.status(200).json({
+      success: true,
+      data: devices,
+      error: false,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const removeDevice = async (
+  req: customRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id: userId } = req.user;
+    const { deviceId } = req.params;
+
+    const result = await deactivateDevice(userId, Number(deviceId));
+
+    return res.status(200).json({
+      success: true,
+      data: result,
       error: false,
     });
   } catch (err) {

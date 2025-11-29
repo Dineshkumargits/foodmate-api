@@ -1,6 +1,7 @@
 import User from "./User";
 import FoodEntry from "./FoodEntry";
 import Payment from "./Payment";
+import Device from "./Device";
 
 // FoodEntry relations
 FoodEntry.belongsTo(User, { foreignKey: "seller_id", as: "Seller" });
@@ -15,5 +16,8 @@ User.hasMany(FoodEntry, { foreignKey: "seller_id", as: "FoodEntriesSold" });
 User.hasMany(FoodEntry, { foreignKey: "consumer_id", as: "FoodEntriesBought" });
 User.hasMany(Payment, { foreignKey: "seller_id", as: "PaymentsReceived" });
 User.hasMany(Payment, { foreignKey: "consumer_id", as: "PaymentsMade" });
+User.hasMany(Device, { foreignKey: "user_id", as: "Devices" });
 
-export { User, FoodEntry, Payment };
+Device.belongsTo(User, { foreignKey: "user_id", as: "User" });
+
+export { User, FoodEntry, Payment, Device };

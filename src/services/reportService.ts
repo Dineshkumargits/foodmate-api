@@ -93,7 +93,7 @@ export const getMonthlySummaryService = async ({
   monthName: string;
 }) => {
   const year = new Date().getFullYear();
-  const consumerFilter = consumerId ? { consumerId } : {};
+  const consumerFilter = consumerId ? { consumer_id: consumerId } : {};
 
   const foodStats = await FoodEntry.findOne({
     where: {

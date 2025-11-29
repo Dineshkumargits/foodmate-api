@@ -7,6 +7,7 @@ import {
   getFoodEntryById,
 } from "../services/foodEntryService";
 import { createEntry } from "../services/foodEntryService";
+import { sendMealAddedNotification } from "../services/notificationService";
 
 export const addFoodEntry = async (req: AuthRequest, res: Response) => {
   const { consumer_id, date, meal_type, food_name, amount } = req.body;
@@ -27,6 +28,13 @@ export const addFoodEntry = async (req: AuthRequest, res: Response) => {
     food_name,
     amount
   );
+  // Send push notification to consumer
+  try {
+    await sendMealAddedNotification(consumer_id, food_name, meal_type, amount);
+  } catch (error) {
+    console.error("Failed to send push notification:", error);
+    // Don't fail the request if notification fails
+  }
   res.json({ id });
 };
 
