@@ -16,4 +16,4 @@ CREATE TABLE IF NOT EXISTS devices (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Keep push_token in users table for backward compatibility
-ALTER TABLE users ADD COLUMN IF NOT EXISTS push_token VARCHAR(255) DEFAULT NULL;
+ALTER TABLE users ADD COLUMN push_token VARCHAR(255) DEFAULT NULL;

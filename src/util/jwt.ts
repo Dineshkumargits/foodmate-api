@@ -2,10 +2,7 @@ import { jwtConfig } from "../config/config";
 
 import jwt from "jsonwebtoken";
 
-export const sign = (
-  payload: any,
-  options = { expiresIn: jwtConfig.expiry + "h" }
-) => {
+export const sign = (payload: any, options = {}) => {
   return jwt.sign(payload, jwtConfig.secret, options);
 };
 
