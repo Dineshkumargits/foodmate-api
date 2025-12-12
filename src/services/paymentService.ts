@@ -1,8 +1,9 @@
-import { Payment } from "../models";
+import { FoodEntry, Payment } from "../models";
 import { AuthRequest } from "../middleware/auth";
 import { Response } from "express";
 import User from "../models/User";
 import { getFoodEntryByConsumerId } from "./foodEntryService";
+import { Op } from "sequelize";
 
 export const recordPaymentService = async ({
   req,
@@ -73,5 +74,56 @@ export const getMyExpensesService = async (consumerId: number) => {
   return {
     foodItems,
     payments,
+  };
+};
+
+export const getMonthlyBillService = async (
+  consumerId: number,
+  month: number,
+  year: number
+) => {
+  // Calculate start and end dates for the month
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0); // Last day of the month
+
+  // Get all food entries for this month
+  const foodEntries = await FoodEntry.findAll({
+    where: {
+      consumer_id: consumerId,
+      date: {
+        [Op.between]: [startDate, endDate],
+      },
+    },
+    order: [["date", "ASC"]],
+  });
+
+  // Get all payments for this month
+  const monthPayments = await Payment.findAll({
+    where: {
+      consumer_id: consumerId,
+      date: {
+        [Op.between]: [startDate, endDate],
+      },
+    },
+    order: [["date", "ASC"]],
+  });
+
+  const totalDue = foodEntries.reduce(
+    (sum, entry) => sum + Number(entry.amount),
+    0
+  );
+  const totalPaid = monthPayments.reduce(
+    (sum, payment) => sum + Number(payment.amount),
+    0
+  );
+
+  return {
+    month,
+    year,
+    foodEntries,
+    payments: monthPayments,
+    totalDue,
+    totalPaid,
+    balance: totalDue - totalPaid,
   };
 };

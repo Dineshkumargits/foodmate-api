@@ -3,6 +3,7 @@ import {
   getMyExpensesService,
   getMyPaymentsService,
   recordPaymentService,
+  getMonthlyBillService,
 } from "../services/paymentService";
 import { AuthRequest } from "../middleware/auth";
 import { NextFunction, Response } from "express";
@@ -68,6 +69,30 @@ export const getMyData = async (
   try {
     const consumerId = req.user.id;
     const response = await getMyExpensesService(consumerId);
+    res.json(response);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getMonthlyBill = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const consumerId =
+      req.user.role === "consumer"
+        ? req.user.id
+        : Number(req.params.consumerId);
+    const month = Number(req.query.month);
+    const year = Number(req.query.year);
+
+    if (!month || !year || month < 1 || month > 12) {
+      return res.status(400).json({ error: "Invalid month or year" });
+    }
+
+    const response = await getMonthlyBillService(consumerId, month, year);
     res.json(response);
   } catch (err) {
     next(err);

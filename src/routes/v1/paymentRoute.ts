@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { getAllPayments, recordPayment } from "../../controllers/payment";
+import {
+  getAllPayments,
+  recordPayment,
+  getMonthlyBill,
+} from "../../controllers/payment";
 import { authMiddleware } from "../../middleware/auth";
 import { upload } from "../../middleware/upload";
 import { roleCheck } from "../../middleware/roleCheck";
@@ -15,5 +19,12 @@ paymentsRouter.post(
 );
 
 paymentsRouter.get("/", authMiddleware, roleCheck(["seller"]), getAllPayments);
+
+paymentsRouter.get(
+  "/monthly-bill/:consumerId?",
+  authMiddleware,
+  roleCheck(["seller"]),
+  getMonthlyBill
+);
 
 export default paymentsRouter;
