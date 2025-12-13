@@ -7,7 +7,57 @@ import {
   sendDailyFoodEntryReminderToSeller,
   sendMonthEndPaymentReminderToSeller,
   sendMonthEndPaymentReminderToConsumer,
+  sendPushNotification,
 } from "../services/notificationService";
+import { customRequest } from "../types/customDefinition";
+import { getActiveDeviceTokens } from "../services/deviceService";
+
+// Test simple notification for current user
+export const testSimpleNotification = async (
+  req: customRequest,
+  res: Response
+) => {
+  try {
+    const { id: userId, name } = req.user;
+
+    // Check if user has push tokens
+    const tokens = await getActiveDeviceTokens(userId);
+
+    if (!tokens || tokens.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "No active push tokens found for your account. Please make sure notifications are enabled in the app.",
+        userId,
+        userName: name,
+      });
+    }
+
+    // Send test notification
+    const result = await sendPushNotification(
+      userId,
+      "Test Notification",
+      "This is a test notification from Foodmate! 🎉",
+      { type: "test" },
+      "high"
+    );
+
+    res.json({
+      success: true,
+      message: "Test notification sent successfully",
+      userId,
+      userName: name,
+      tokens,
+      result,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to send test notification",
+      error: error.message,
+    });
+  }
+};
 
 // Test endpoint for daily food entry reminders
 export const testDailyFoodEntryReminder = async (

@@ -3,13 +3,17 @@ import {
   testDailyFoodEntryReminder,
   testMonthStartPaymentReminder,
   testNotificationForUser,
+  testSimpleNotification,
 } from "../../controllers/notificationTest";
 import requiresUser from "../../middleware/requiresUser";
 import isAdmin from "../../middleware/isAdmin";
 
 const router = Router();
 
-// Protect these routes - only admins should be able to test notifications
+// Test simple notification for current logged-in user
+router.get("/test/simple", requiresUser, testSimpleNotification);
+
+// Protect admin-only routes
 router.use(requiresUser);
 router.use(isAdmin);
 

@@ -39,18 +39,33 @@ export const sendPushNotification = async (
       channelId: priority === "high" ? "high-priority" : "default",
     }));
 
+    console.log(`Sending ${messages.length} notifications to user ${userId}`);
+    console.log(`Notification: "${title}" - "${body}"`);
+
     const chunks = expo.chunkPushNotifications(messages);
     const tickets = [];
 
     for (const chunk of chunks) {
       try {
         const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+        console.log(`Sent chunk, received ${ticketChunk.length} tickets`);
         tickets.push(...ticketChunk);
+
+        // Log any errors in tickets
+        ticketChunk.forEach((ticket, index) => {
+          if (ticket.status === "error") {
+            console.error(`Error in ticket ${index}:`, ticket.message);
+            if (ticket.details) {
+              console.error("Details:", ticket.details);
+            }
+          }
+        });
       } catch (error) {
         console.error("Error sending push notification chunk:", error);
       }
     }
 
+    console.log(`Total tickets received: ${tickets.length}`);
     return tickets;
   } catch (error) {
     console.error("Error in sendPushNotification:", error);
