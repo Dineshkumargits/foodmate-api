@@ -11,6 +11,130 @@ import {
 } from "../services/notificationService";
 import { customRequest } from "../types/customDefinition";
 import { getActiveDeviceTokens } from "../services/deviceService";
+import { Expo, ExpoPushMessage } from "expo-server-sdk";
+
+const expo = new Expo();
+
+// Check notification receipt status
+export const checkNotificationReceipt = async (req: Request, res: Response) => {
+  try {
+    const { receiptId } = req.params;
+
+    if (!receiptId) {
+      return res.status(400).json({
+        success: false,
+        message: "Receipt ID is required",
+      });
+    }
+
+    console.log("Checking receipt for:", receiptId);
+
+    const receiptIdChunks = expo.chunkPushNotificationReceiptIds([receiptId]);
+
+    for (const chunk of receiptIdChunks) {
+      try {
+        const receipts = await expo.getPushNotificationReceiptsAsync(chunk);
+        console.log("Receipts:", JSON.stringify(receipts, null, 2));
+
+        const receipt = receipts[receiptId];
+
+        if (receipt) {
+          if (receipt.status === "ok") {
+            return res.json({
+              success: true,
+              message: "Notification delivered successfully",
+              receipt,
+            });
+          } else if (receipt.status === "error") {
+            return res.status(400).json({
+              success: false,
+              message: "Notification delivery failed",
+              error: receipt.message,
+              details: receipt.details,
+              receipt,
+            });
+          }
+        } else {
+          return res.status(404).json({
+            success: false,
+            message:
+              "Receipt not found - notification might still be processing",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching receipts:", error);
+        throw error;
+      }
+    }
+  } catch (error: any) {
+    console.error("Exception in checkNotificationReceipt:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+// Test notification to static push token
+export const testStaticToken = async (req: Request, res: Response) => {
+  try {
+    const staticToken = "ExponentPushToken[9ZDQ4QORHihyaQt8pnhRY1]";
+
+    if (!Expo.isExpoPushToken(staticToken)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Expo push token format",
+        token: staticToken,
+      });
+    }
+
+    const message: ExpoPushMessage = {
+      to: staticToken,
+      sound: "default",
+      title: "🎯 Static Token Test",
+      body: "This is a direct test notification to your device!",
+      data: { type: "static_test", timestamp: new Date().toISOString() },
+      priority: "high",
+      channelId: "high-priority",
+    };
+
+    console.log("Sending test notification to static token:", staticToken);
+
+    const ticketChunk = await expo.sendPushNotificationsAsync([message]);
+
+    console.log("Tickets received:", ticketChunk);
+
+    const ticket = ticketChunk[0];
+
+    if (ticket.status === "ok") {
+      console.log("✓ Notification sent successfully!");
+      return res.json({
+        success: true,
+        message: "Notification sent successfully",
+        token: staticToken,
+        ticketId: ticket.id,
+        status: ticket.status,
+      });
+    } else {
+      console.error("✗ Error sending notification:", ticket);
+      return res.status(400).json({
+        success: false,
+        message: "Failed to send notification",
+        token: staticToken,
+        error: ticket.message,
+        details: ticket.details,
+      });
+    }
+  } catch (error: any) {
+    console.error("Exception in testStaticToken:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
 
 // Test simple notification for current user
 export const testSimpleNotification = async (

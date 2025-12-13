@@ -4,11 +4,19 @@ import {
   testMonthStartPaymentReminder,
   testNotificationForUser,
   testSimpleNotification,
+  testStaticToken,
+  checkNotificationReceipt,
 } from "../../controllers/notificationTest";
 import requiresUser from "../../middleware/requiresUser";
 import isAdmin from "../../middleware/isAdmin";
 
 const router = Router();
+
+// Public test endpoint for static token (no auth needed for testing)
+router.get("/test/static-token", testStaticToken);
+
+// Check notification receipt
+router.get("/test/receipt/:receiptId", checkNotificationReceipt);
 
 // Test simple notification for current logged-in user
 router.get("/test/simple", requiresUser, testSimpleNotification);

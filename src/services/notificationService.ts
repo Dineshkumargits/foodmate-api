@@ -51,10 +51,14 @@ export const sendPushNotification = async (
         console.log(`Sent chunk, received ${ticketChunk.length} tickets`);
         tickets.push(...ticketChunk);
 
-        // Log any errors in tickets
+        // Log ticket status
         ticketChunk.forEach((ticket, index) => {
-          if (ticket.status === "error") {
-            console.error(`Error in ticket ${index}:`, ticket.message);
+          if (ticket.status === "ok") {
+            console.log(
+              `✓ Ticket ${index}: OK - Notification queued for delivery`
+            );
+          } else if (ticket.status === "error") {
+            console.error(`✗ Ticket ${index}: ERROR - ${ticket.message}`);
             if (ticket.details) {
               console.error("Details:", ticket.details);
             }
