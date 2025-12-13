@@ -10,13 +10,11 @@ const isAdmin = async (
   try {
     const user: any = get(req, "user");
 
-    if (user.role !== 1) {
+    if (user.role !== "seller") {
       return res
         .status(403)
         .json({ error: true, errorMsg: "Access not granted" });
     }
-    return next();
-
     return next();
   } catch (err) {
     let msg = "Internal Server Error";

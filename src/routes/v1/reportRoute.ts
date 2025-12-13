@@ -3,6 +3,7 @@ import {
   getConsumerReports,
   getDashboardData,
   getMonthlySummary,
+  generateBill,
 } from "../../controllers/report";
 import { authMiddleware } from "../../middleware/auth";
 import { roleCheck } from "../../middleware/roleCheck";
@@ -28,6 +29,13 @@ reportRouter.get(
   authMiddleware,
   roleCheck(["seller"]),
   getMonthlySummary
+);
+
+reportRouter.get(
+  "/generate-bill",
+  authMiddleware,
+  roleCheck(["seller"]),
+  generateBill
 );
 
 export default reportRouter;

@@ -7,6 +7,7 @@ import foodEntryRouter from "./foodEntryRoute";
 import myRouter from "./myRoute";
 import paymentsRouter from "./paymentRoute";
 import reportRouter from "./reportRoute";
+import notificationTestRouter from "./notificationTestRoute";
 
 const appRouter = Router();
 
@@ -39,6 +40,10 @@ const appRoutes = [
   {
     path: "/reports",
     router: reportRouter,
+  },
+  {
+    path: "/notifications",
+    router: notificationTestRouter,
   },
 ];
 

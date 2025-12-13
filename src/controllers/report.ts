@@ -5,6 +5,7 @@ import {
   getDashboardDataService,
   getMonthlySummaryService,
 } from "../services/reportService";
+import { generateBillPDF } from "../services/billService";
 import { parseMonthName } from "../util/util";
 
 export const getConsumerReports = async (
@@ -53,6 +54,42 @@ export const getMonthlySummary = async (
       monthName,
     });
     res.json(response);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const generateBill = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { consumerId, month } = req.query as {
+      consumerId: string;
+      month: string;
+    };
+
+    if (!consumerId || !month) {
+      return res
+        .status(400)
+        .json({ error: "consumerId and month are required" });
+    }
+
+    const sellerId = req.user.id;
+
+    const pdfBuffer = await generateBillPDF({
+      consumerId: Number(consumerId),
+      month,
+      sellerId,
+    });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=bill-${month}-${consumerId}.pdf`
+    );
+    res.send(pdfBuffer);
   } catch (err) {
     next(err);
   }

@@ -8,7 +8,8 @@ export const sendPushNotification = async (
   userId: number,
   title: string,
   body: string,
-  data?: any
+  data?: any,
+  priority: "default" | "normal" | "high" = "high"
 ) => {
   try {
     // Get all active device tokens for the user
@@ -27,13 +28,15 @@ export const sendPushNotification = async (
       return null;
     }
 
-    // Create messages for all valid tokens
+    // Create messages for all valid tokens with priority
     const messages: ExpoPushMessage[] = validTokens.map(token => ({
       to: token,
       sound: "default",
       title,
       body,
       data: data || {},
+      priority,
+      channelId: priority === "high" ? "high-priority" : "default",
     }));
 
     const chunks = expo.chunkPushNotifications(messages);
@@ -87,6 +90,77 @@ export const sendPaymentReceivedNotification = async (
       type: "payment_received",
       amount,
       date,
-    }
+    },
+    "high"
+  );
+};
+
+// Daily reminder for seller to add food entries
+export const sendDailyFoodEntryReminderToSeller = async (sellerId: number) => {
+  return sendPushNotification(
+    sellerId,
+    "📝 Add Today's Food Entries",
+    "Don't forget to add food entries for today!",
+    {
+      type: "daily_food_entry_reminder",
+      timestamp: new Date().toISOString(),
+    },
+    "high"
+  );
+};
+
+// Daily reminder for consumer about food entries
+export const sendDailyFoodEntryReminderToConsumer = async (
+  consumerId: number
+) => {
+  return sendPushNotification(
+    consumerId,
+    "🍽️ Food Entry Update",
+    "Check your today's meals and track your expenses!",
+    {
+      type: "daily_food_entry_check",
+      timestamp: new Date().toISOString(),
+    },
+    "high"
+  );
+};
+
+// Month-end payment reminder for seller
+export const sendMonthEndPaymentReminderToSeller = async (
+  sellerId: number,
+  consumerName: string,
+  pendingAmount: number
+) => {
+  return sendPushNotification(
+    sellerId,
+    "💰 Payment Collection Reminder",
+    `Collect ₹${pendingAmount} from ${consumerName} for this month`,
+    {
+      type: "month_end_payment_reminder_seller",
+      consumerName,
+      pendingAmount,
+      timestamp: new Date().toISOString(),
+    },
+    "high"
+  );
+};
+
+// Month-end payment reminder for consumer
+export const sendMonthEndPaymentReminderToConsumer = async (
+  consumerId: number,
+  pendingAmount: number,
+  sellerName: string
+) => {
+  return sendPushNotification(
+    consumerId,
+    "💳 Payment Due Reminder",
+    `You have ₹${pendingAmount} pending payment to ${sellerName} for this month`,
+    {
+      type: "month_end_payment_reminder_consumer",
+      pendingAmount,
+      sellerName,
+      timestamp: new Date().toISOString(),
+    },
+    "high"
   );
 };
