@@ -1,4 +1,5 @@
 import {
+  deactivatePushToken,
   getDevices,
   removeDevice,
   savePushToken,
@@ -32,6 +33,7 @@ userRouter.patch(
 userRouter.post("/push-token", requireUser, savePushToken);
 userRouter.get("/devices", requireUser, getDevices);
 userRouter.delete("/devices/:deviceId", requireUser, removeDevice);
+userRouter.post("/deactivate-push-token", requireUser, deactivatePushToken);
 
 export default userRouter;
 

@@ -14,6 +14,7 @@ import { encryptSync } from "../util/encrypt";
 import { User } from "../models";
 import {
   deactivateDevice,
+  deactivateDeviceToken,
   getUserDevices,
   updatePushToken,
 } from "../services/deviceService";
@@ -198,6 +199,31 @@ export const savePushToken = async (
       model: deviceInfo.model,
       osVersion: deviceInfo.osVersion,
     });
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+      error: false,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deactivatePushToken = async(
+  req: customRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id: userId } = req.user;
+    const { pushToken } = req.body;
+
+    if (!pushToken) {
+      throw new ApiError(400, "Push token is required");
+    }
+
+    const result = await deactivateDeviceToken(pushToken);
 
     return res.status(200).json({
       success: true,

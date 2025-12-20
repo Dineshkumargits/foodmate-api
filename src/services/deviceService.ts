@@ -148,3 +148,14 @@ export const getActiveDeviceTokens = async (
 
   return devices.map(device => device.push_token);
 };
+
+export const deactivateDeviceToken = async (pushToken: string) => {
+  await Device.update(
+    { is_active: false },
+    {
+      where: {
+        push_token: pushToken,
+      },
+    }
+  );
+};

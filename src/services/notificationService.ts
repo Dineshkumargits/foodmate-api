@@ -1,6 +1,6 @@
 import { Expo, ExpoPushMessage } from "expo-server-sdk";
 import User from "../models/User";
-import { getActiveDeviceTokens } from "./deviceService";
+import { getActiveDeviceTokens, deactivateDeviceToken } from "./deviceService";
 
 const expo = new Expo();
 
@@ -44,12 +44,23 @@ export const sendPushNotification = async (
 
     const chunks = expo.chunkPushNotifications(messages);
     const tickets = [];
+    const ticketToTokenMap: Record<string, string> = {};
 
     for (const chunk of chunks) {
       try {
         const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
         console.log(`Sent chunk, received ${ticketChunk.length} tickets`);
         tickets.push(...ticketChunk);
+
+        // Map tickets to their tokens
+        ticketChunk.forEach((ticket, index) => {
+          if (ticket.status === "ok" && ticket.id) {
+            const msg = chunk[index];
+            if (typeof msg.to === "string") {
+              ticketToTokenMap[ticket.id] = msg.to;
+            }
+          }
+        });
 
         // Log ticket status
         ticketChunk.forEach((ticket, index) => {
@@ -83,7 +94,11 @@ export const sendPushNotification = async (
 
             if (receipt.details?.error === "DeviceNotRegistered") {
               console.error("🧹 Removing invalid token");
-              // DELETE TOKEN FROM DB IMMEDIATELY
+              const token = ticketToTokenMap[id];
+              if (token) {
+                await deactivateDeviceToken(token);
+                console.log(`✓ Deactivated invalid token: ${token}`);
+              }
             }
 
             if (receipt.details?.error === "InvalidCredentials") {
