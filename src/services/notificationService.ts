@@ -69,6 +69,34 @@ export const sendPushNotification = async (
       }
     }
 
+    const receiptIds = tickets.filter(t => t.id).map(t => t.id);
+
+    const receiptIdChunks = expo.chunkPushNotificationReceiptIds(receiptIds);
+
+    for (const chunk of receiptIdChunks) {
+      try {
+        const receipts = await expo.getPushNotificationReceiptsAsync(chunk);
+
+        for (const [id, receipt] of Object.entries(receipts)) {
+          if (receipt.status === "error") {
+            console.error("❌ Push delivery failed:", receipt.message);
+
+            if (receipt.details?.error === "DeviceNotRegistered") {
+              console.error("🧹 Removing invalid token");
+              // DELETE TOKEN FROM DB IMMEDIATELY
+            }
+
+            if (receipt.details?.error === "InvalidCredentials") {
+              console.error("🔥 FCM credentials are invalid");
+              // STOP SENDING — FIX CREDENTIALS
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching receipts:", err);
+      }
+    }
+
     console.log(`Total tickets received: ${tickets.length}`);
     return tickets;
   } catch (error) {
